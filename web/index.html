@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpendWise - Personal Expense Tracker (INR ₹)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <!-- Chart.js for interactive analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+</head>
+<body>
+  <!-- Header / Navigation -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <div class="logo-box">
+        <span class="logo-icon">💰</span>
+        <div>
+          <h1 class="logo-title">SpendWise</h1>
+          <p class="logo-subtitle">Personal Expense &amp; Budget Tracker (INR ₹)</p>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <button class="btn btn-primary" id="btnOpenAddModal">
+          <span>➕</span> Add Expense
+        </button>
+        <button class="btn btn-secondary" id="btnOpenBudgetModal">
+          <span>🎯</span> Set Budget
+        </button>
+        <a href="/api/export" class="btn btn-outline" download>
+          <span>📥</span> Export CSV
+        </a>
+        <button class="btn btn-danger-outline" id="btnResetData" title="Wipe data and start fresh">
+          <span>🔄</span> Reset
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container main-content">
+    <!-- Stat Cards -->
+    <section class="stats-grid">
+      <div class="stat-card" style="--accent: #2563eb;">
+        <div class="stat-header">
+          <span class="stat-title">Total Spending (All-Time)</span>
+          <span class="stat-icon">💳</span>
+        </div>
+        <div class="stat-value" id="cardTotalSpent">₹0.00</div>
+        <div class="stat-meta" id="cardTxCount">0 transactions recorded</div>
+      </div>
+
+      <div class="stat-card" style="--accent: #8b5cf6;">
+        <div class="stat-header">
+          <span class="stat-title">Spent This Month</span>
+          <span class="stat-icon">📅</span>
+        </div>
+        <div class="stat-value" id="cardMonthSpent">₹0.00</div>
+        <div class="stat-meta" id="cardDailyAvg">Daily avg: ₹0.00</div>
+      </div>
+
+      <div class="stat-card" style="--accent: #10b981;">
+        <div class="stat-header">
+          <span class="stat-title">Monthly Budget Left</span>
+          <span class="stat-badge" id="budgetStatusBadge">On Track</span>
+        </div>
+        <div class="stat-value" id="cardBudgetRemaining">₹0.00</div>
+        <div class="stat-meta" id="cardBudgetLimit">Limit: ₹0.00</div>
+      </div>
+
+      <div class="stat-card" style="--accent: #f59e0b;">
+        <div class="stat-header">
+          <span class="stat-title">Highest Single Expense</span>
+          <span class="stat-icon">⭐</span>
+        </div>
+        <div class="stat-value" id="cardHighestAmt">₹0.00</div>
+        <div class="stat-meta" id="cardHighestTitle">None yet</div>
+      </div>
+    </section>
+
+    <!-- Monthly Budget Progress Bar -->
+    <section class="budget-progress-section">
+      <div class="progress-info">
+        <span class="progress-label">Monthly Budget Consumption: <strong id="progressPctText">0%</strong></span>
+        <span class="progress-details" id="progressSpentDetails">₹0.00 of ₹0.00</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="budgetProgressBar" style="width: 0%;"></div>
+      </div>
+    </section>
+
+    <!-- Visual Charts Grid -->
+    <section class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <h3>Spending by Category</h3>
+          <span class="chart-subtitle">Distribution across expense categories</span>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="categoryChart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <h3>Monthly Trend</h3>
+          <span class="chart-subtitle">Spending across calendar months</span>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="monthlyChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Expenses Table Section -->
+    <section class="table-section">
+      <div class="table-header-row">
+        <div>
+          <h2>Expense Transactions</h2>
+          <p class="section-desc">Search, filter, edit and track every expense item</p>
+        </div>
+        
+        <!-- Filter Controls -->
+        <div class="filter-controls">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Search by title, note, ID..." />
+            <button class="clear-search" id="clearSearch" title="Clear">✕</button>
+          </div>
+
+          <select id="categoryFilter" class="select-filter">
+            <option value="">All Categories</option>
+            <option value="FOOD">🍛 Food &amp; Dining</option>
+            <option value="GROCERIES">🛒 Groceries &amp; Essentials</option>
+            <option value="TRANSPORT">🚗 Transportation &amp; Fuel</option>
+            <option value="HOUSING">🏠 Housing &amp; Rent</option>
+            <option value="UTILITIES">💡 Bills &amp; Utilities</option>
+            <option value="SHOPPING">🛍️ Shopping</option>
+            <option value="ENTERTAINMENT">🎬 Entertainment &amp; OTT</option>
+            <option value="HEALTH">💊 Healthcare &amp; Medicine</option>
+            <option value="EDUCATION">📚 Education &amp; Fees</option>
+            <option value="PERSONAL">🧴 Personal Care</option>
+            <option value="INVESTMENT">📈 Investments &amp; SIPs</option>
+            <option value="TRAVEL">✈️ Travel &amp; Vacation</option>
+            <option value="OTHER">📦 Other</option>
+          </select>
+
+          <select id="timeFilter" class="select-filter">
+            <option value="">All Time</option>
+            <option value="this_month">This Month</option>
+            <option value="last_30">Last 30 Days</option>
+            <option value="this_year">This Year</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="expense-table" id="expenseTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Category</th>
+              <th>Payment Mode</th>
+              <th class="text-right">Amount (₹)</th>
+              <th>Notes</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="expenseTableBody">
+            <!-- Dynamically populated rows -->
+          </tbody>
+        </table>
+        <div id="emptyState" class="empty-state" style="display: none;">
+          <span class="empty-icon">✨</span>
+          <p><strong>Your expense tracker is completely fresh!</strong></p>
+          <p style="font-size: 0.85rem; margin-top: 4px;">Click <strong>"🎯 Set Budget"</strong> to set your monthly limit, then <strong>"➕ Add Expense"</strong> to log your first transaction.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Add / Edit Expense Modal -->
+  <div class="modal-overlay" id="expenseModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modalTitle">Add New Expense</h3>
+        <button class="modal-close" id="btnCloseModal">&times;</button>
+      </div>
+      <form id="expenseForm">
+        <input type="hidden" id="expenseId" />
+        
+        <div class="form-group">
+          <label for="expenseTitle">Description / Title <span class="required">*</span></label>
+          <input type="text" id="expenseTitle" placeholder="e.g. Swiggy order, Petrol, Electricity bill, Rent" required />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="expenseAmount">Amount (₹) <span class="required">*</span></label>
+            <input type="number" id="expenseAmount" step="1" min="1" placeholder="e.g. 450" required />
+          </div>
+          <div class="form-group">
+            <label for="expenseDate">Date <span class="required">*</span></label>
+            <input type="date" id="expenseDate" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="expenseCategory">Category</label>
+            <select id="expenseCategory">
+              <option value="FOOD">🍛 Food &amp; Dining</option>
+              <option value="GROCERIES">🛒 Groceries &amp; Essentials</option>
+              <option value="TRANSPORT">🚗 Transportation &amp; Fuel</option>
+              <option value="HOUSING">🏠 Housing &amp; Rent</option>
+              <option value="UTILITIES">💡 Bills &amp; Utilities (Power, Wifi)</option>
+              <option value="SHOPPING">🛍️ Shopping</option>
+              <option value="ENTERTAINMENT">🎬 Entertainment &amp; OTT</option>
+              <option value="HEALTH">💊 Healthcare &amp; Medicine</option>
+              <option value="EDUCATION">📚 Education &amp; Fees</option>
+              <option value="PERSONAL">🧴 Personal Care</option>
+              <option value="INVESTMENT">📈 Investments &amp; SIPs</option>
+              <option value="TRAVEL">✈️ Travel &amp; Vacation</option>
+              <option value="OTHER">📦 Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="expensePayment">Payment Method</label>
+            <select id="expensePayment">
+              <option value="UPI">📱 UPI (GPay / PhonePe / Paytm)</option>
+              <option value="CASH">💵 Cash</option>
+              <option value="DEBIT_CARD">💳 Debit Card</option>
+              <option value="CREDIT_CARD">💳 Credit Card</option>
+              <option value="NET_BANKING">🏦 Net Banking</option>
+              <option value="OTHER">📝 Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="expenseNotes">Notes (Optional)</label>
+          <input type="text" id="expenseNotes" placeholder="Additional details (e.g. with friends, bill no)" />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btnCancelModal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveExpense">Save Expense</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Budget Modal -->
+  <div class="modal-overlay" id="budgetModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="budgetModalTitle">🎯 Set Monthly Budget</h3>
+        <button class="modal-close" id="btnCloseBudgetModal">&times;</button>
+      </div>
+      <form id="budgetForm">
+        <div class="form-group">
+          <label for="budgetLimitInput">Monthly Spending Limit in Rupees (₹) <span class="required">*</span></label>
+          <input type="number" id="budgetLimitInput" step="500" min="0" placeholder="e.g. 25000" required />
+          <small class="form-hint">Set your total target budget limit for this month.</small>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btnCancelBudgetModal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Budget</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

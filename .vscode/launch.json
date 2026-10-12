@@ -1,0 +1,27 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Run Website (Web Server)",
+      "request": "launch",
+      "mainClass": "com.expensetracker.Main",
+      "args": ["--web"]
+    },
+    {
+      "type": "java",
+      "name": "Run Terminal CLI",
+      "request": "launch",
+      "mainClass": "com.expensetracker.Main",
+      "args": ["--cli"],
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "java",
+      "name": "Run Desktop GUI",
+      "request": "launch",
+      "mainClass": "com.expensetracker.Main",
+      "args": ["--gui"]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+# Bytecode and build artifacts
+bin/
+*.class
+*.jar
+
+# IDE specific files
+.idea/
+*.iml
+.project
+.classpath
+.settings/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
